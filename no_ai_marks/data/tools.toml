@@ -1,0 +1,624 @@
+# The AI tools no-ai-marks looks for.
+#
+# Almost all upkeep happens in this file: when a new model, agent, or bot
+# account appears, add or extend an entry. Every rule's patterns are built
+# from it. Projects can add entries in their own config file with the same
+# fields, and `no-ai-marks tools` shows the combined list.
+#
+# Fields (only id is required):
+#
+#   id               Unique key. A project config entry with the same id
+#                    extends this one; disable-tools = [...] switches it off.
+#   kind             "product" (the default); "vendor" for a company name,
+#                    which isn't matched in short tags like "(via X)" because
+#                    projects that call its API write that; or "generic" for
+#                    words like "an AI", matched only in attribution phrases.
+#   names            Names as written. Case is ignored, and words may be
+#                    separated by spaces or a hyphen ("Claude Code" also
+#                    matches "claude-code").
+#   patterns         Regular expressions for names a list can't spell out,
+#                    such as numbered versions.
+#   models           Model family words that can follow a name ("Opus" in
+#                    "Claude Opus 4.5").
+#   first-name       The name is also a person's first name. It then doesn't
+#                    match when a capitalized word follows ("Claude Shannon"),
+#                    unless that word is one of the models.
+#   emails           Commit author and trailer emails. "*" stands for any
+#                    local part.
+#   github-logins    GitHub accounts. Matched as author names and as
+#                    <id>+<login>@users.noreply.github.com emails.
+#   author-patterns  Regular expressions matched against the whole author
+#                    name, for tools that rename the author ("Jane (aider)").
+#   branch-prefixes  Branch prefixes the tool creates ("claude" for claude/fix).
+#   branch-patterns  Regular expressions for branch names that have no
+#                    prefix, matched from the start ("Q-DEV-issue-\d+-").
+#   session-urls     Links to shared chats or agent sessions, without
+#                    https://. Subdomains such as www. also match. An id must
+#                    follow, so a bare "chatgpt.com/share/" doesn't count.
+#   markers          Exact text the tool puts in commit messages or pull
+#                    request descriptions, such as HTML comments. Case is
+#                    ignored.
+#   metadata-keys    PNG text chunk keys the tool writes into images.
+#   skip             Contexts to leave out: "phrases", "tags" (short
+#                    mentions: "(via X)" and trailer keys like "X-Session"),
+#                    "identity", or "metadata". Use it for names that are
+#                    ordinary words.
+#   examples         Text that must be flagged.
+#   counterexamples  Text that must not be flagged.
+#   source           Where the details came from: the tool's source code,
+#                    docs, or public commits and pull requests. "unverified"
+#                    marks details that still need one.
+#
+# The tests check every example, counterexample, email, login, branch
+# prefix, session URL, marker, and metadata key below, so a new entry is
+# covered without writing test code. tests/corpus/ holds the real commits,
+# pull requests, and links these entries were checked against.
+
+[[tool]]
+id = "aider"
+names = ["aider"]
+emails = ["*@aider.chat"]
+author-patterns = ['.*\(aider\)']
+examples = [
+  "Co-authored-by: aider (anthropic/claude-sonnet-4) <aider@aider.chat>",
+  "Co-authored-by: Jane Dev (aider) <jane@example.com>",
+]
+source = "https://github.com/Aider-AI/aider/blob/5dc9490bb35f9729ef2c95d00a19ccd30c26339c/aider/repo.py#L246-L294"
+
+[[tool]]
+id = "amazon-q"
+names = ["Amazon Q", "Amazon Q Developer", "Q Developer", "CodeWhisperer"]
+github-logins = ["amazon-q-developer[bot]"]
+branch-patterns = ['Q-DEV-issue-\d+-\d+']
+examples = [
+  "Co-authored-by: amazon-q-developer[bot] <208079219+amazon-q-developer[bot]@users.noreply.github.com>",
+]
+source = "https://github.com/thinkingsage/context-bazaar/pull/89 https://github.com/jobbyist/skinlabs-africa/pull/65"
+
+[[tool]]
+id = "amp"
+names = ["Amp Code", "Sourcegraph Amp"]
+emails = ["amp@ampcode.com"]
+session-urls = ["ampcode.com/threads/"]
+examples = [
+  "Co-authored-by: Amp <amp@ampcode.com>",
+  "Amp-Thread-ID: https://ampcode.com/threads/T-01a047eb-87a0-72db-bfa9-2485355552fa",
+]
+counterexamples = [
+  "See https://ampcode.com/manual",
+  "Fix amp (ampere) unit conversion in power readings",
+]
+source = "https://github.com/shuuul/obsidian-pivi/commit/f916eca6de79982be8d02b5cb08205454f8420e7 https://github.com/stanfordnlp/dspy/pull/10368"
+
+[[tool]]
+id = "anthropic"
+kind = "vendor"
+names = ["Anthropic"]
+examples = ["Author: Anthropic"]
+
+[[tool]]
+id = "charlie"
+names = ["Charlie Labs", "CharlieHelps"]
+emails = ["charlie@charlielabs.ai"]
+github-logins = ["charliecreates[bot]", "CharlieHelps"]
+examples = ["Co-authored-by: CharlieHelps <charlie@charlielabs.ai>"]
+counterexamples = ["Co-authored-by: Charlie Brown <charlie@example.com>"]
+source = "https://github.com/vandean25/auto-core-platform/pull/503 https://github.com/gumnut-ai/immich-adapter/pull/388"
+
+[[tool]]
+id = "chatgpt"
+names = ["ChatGPT", "Chat GPT", "GPT"]
+patterns = ['gpt-?\d(?:\.\d+)?[a-z]*(?:-[a-z0-9]+)*']
+session-urls = [
+  "chatgpt.com/share/",
+  "chatgpt.com/c/",
+  "chatgpt.com/g/",
+  "chat.openai.com/share/",
+  "chat.openai.com/c/",
+]
+examples = [
+  "Written by ChatGPT",
+  "Generated with GPT-4o-mini",
+  "See https://chatgpt.com/share/6802f7a2-1c3c-8000-9b6e-4a5d1f0e2b3c",
+]
+source = "share links as they appear in public GitHub issues; see tests/corpus/cli-tools.jsonl"
+
+[[tool]]
+id = "claude"
+names = ["Claude", "Claude Code"]
+first-name = true
+models = ["Opus", "Sonnet", "Haiku", "Fable", "Instant"]
+emails = ["noreply@anthropic.com"]
+github-logins = ["claude", "claude[bot]"]
+branch-prefixes = ["claude"]
+session-urls = [
+  "claude.ai/code/session_",
+  "claude.ai/chat/",
+  "claude.ai/share/",
+  "claude.ai/public/artifacts/",
+]
+examples = [
+  "Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>",
+  "Co-Authored-By: Claude Code <noreply@anthropic.com>",
+  "Claude-Session: https://claude.ai/code/session_01AbCdEfGhIjKlMnOpQrStUv",
+  "\U0001F916 Generated with [Claude Code](https://claude.com/claude-code)",
+  "_Generated by [Claude Code](https://claude.ai/code/session_01AbCdEfGhIjKlMnOpQrStUv)_",
+  "Assisted-by: Claude:claude-opus-4",
+  "Written by Claude Opus 4.5",
+  "Refactor parser (via Claude)",
+  "Co-authored-by: Claude Assistant <helper@example.com>",
+  "Co-Authored-By: Jane Doe and Claude",
+]
+counterexamples = [
+  "Co-authored-by: Claude Shannon <claude@bell-labs.example>",
+  "Co-authored-by: Claude-Henri Dupont <chd@example.com>",
+  "Co-authored-by: Jane Doe and Claude Shannon",
+  "Signed-off-by: Claude Monet <monet@example.com>",
+  "Route requests via Claude API when enabled",
+  "See https://claude.ai/code/onboarding",
+]
+source = "https://github.com/objectstack-ai/objectui/pull/9079 https://github.com/LiamBMX/joshymc-plugin/pull/615 https://github.com/klausbreyer/v01.io/commit/f02780407790c3ec1225c390c6b935cc3c9bd4c9"
+
+[[tool]]
+id = "cline"
+names = ["Cline", "Roo Code", "Roo Cline", "Kilo Code"]
+examples = ["Generated with Roo Code"]
+source = "names only: no self-attribution found in Cline, Roo Code, or Kilo Code source"
+
+[[tool]]
+id = "codegen"
+names = ["Codegen Agent"]
+github-logins = ["codegen-sh[bot]"]
+session-urls = ["codegen.com/agent/trace/"]
+examples = [
+  "Co-authored-by: codegen-sh[bot] <131295404+codegen-sh[bot]@users.noreply.github.com>",
+  "[View my work](https://codegen.com/agent/trace/179919)",
+]
+counterexamples = ["// Code generated by codegen. DO NOT EDIT.", "Generated by protoc codegen"]
+source = "https://github.com/evgenygurin/dj-music-plugin/pull/27"
+
+[[tool]]
+id = "coderabbit"
+names = ["CodeRabbit"]
+github-logins = ["coderabbitai[bot]"]
+branch-prefixes = ["coderabbit"]
+session-urls = ["app.coderabbit.ai/code/tasks/"]
+examples = [
+  "Co-authored-by: coderabbitai[bot] <136622811+coderabbitai[bot]@users.noreply.github.com>",
+  "[View coding task](https://app.coderabbit.ai/code/tasks/0f5e8a52-3c2d-4a8e-9f1b-7d6c5b4a3e21)",
+]
+source = "https://github.com/VIPnytt/Bekant/pull/57 https://github.com/linuxmalaysia/bda-ai-infra/pull/36"
+
+[[tool]]
+id = "codex"
+names = ["Codex", "OpenAI Codex", "Codex CLI"]
+emails = ["codex@openai.com", "noreply@openai.com"]
+github-logins = ["codex", "chatgpt-codex-connector[bot]"]
+branch-prefixes = ["codex"]
+session-urls = ["chatgpt.com/codex/tasks/", "chatgpt.com/codex/cloud/tasks/"]
+examples = [
+  "Co-authored-by: Codex <noreply@openai.com>",
+  "Generated with [Codex](https://openai.com/codex/).",
+  "https://chatgpt.com/codex/tasks/task_e_68a1b2c3d4e5f60718293a4b5c6d7e8f",
+]
+counterexamples = ["curl -fsSL https://chatgpt.com/codex/install.sh | sh"]
+source = "https://github.com/openai/codex/blob/28f43b0417ab19632f7e53d17806b98151d6b9a0/codex-rs/ext/git-attribution/src/world_state.rs#L9-L22 https://github.com/Ande-ZH/VeloZip/commit/af01606"
+
+[[tool]]
+id = "continue"
+names = ["Continue", "Continue.dev"]
+emails = ["noreply@continue.dev"]
+# Ordinary words: only full attribution phrases and identities count.
+skip = ["tags", "metadata"]
+examples = [
+  "Generated with [Continue](https://continue.dev)",
+  "Co-Authored-By: Continue <noreply@continue.dev>",
+]
+counterexamples = [
+  "Continue on error when the cache is missing",
+  "  continue-on-error: true",
+]
+source = "https://github.com/continuedev/continue/blob/5522c6f44ca0ac3528b37244818fbfa39b5af470/extensions/cli/src/systemMessage.ts#L222-L228"
+
+[[tool]]
+id = "crush"
+names = ["Crush", "Charm Crush"]
+emails = ["crush@charm.land"]
+skip = ["tags", "metadata"]
+examples = [
+  "Assisted-by: Crush:claude-sonnet-4-5",
+  "\U0001F498 Generated with Crush",
+  "Co-Authored-By: Crush <crush@charm.land>",
+]
+counterexamples = ["Fix crush on startup when config is missing"]
+source = "https://github.com/charmbracelet/crush/blob/ce980ada68444b7591d8dfa631af7e94b2aba0b3/internal/agent/tools/bash.md.tpl#L93-L106"
+
+[[tool]]
+id = "cursor"
+names = ["Cursor", "Cursor Agent", "Cursor AI"]
+emails = ["cursoragent@cursor.com"]
+github-logins = ["cursoragent", "cursor[bot]"]
+branch-prefixes = ["cursor"]
+session-urls = ["cursor.com/agents/"]
+# "(via cursor)" is ordinary talk in editor projects.
+skip = ["tags"]
+examples = [
+  "Co-authored-by: Cursor Agent <cursoragent@cursor.com>",
+  "Made-with: Cursor",
+  "https://cursor.com/agents/bc-6b1f3c2e-8a4d-4e5f-9a0b-1c2d3e4f5a6b?cursor_ref=pr_footer",
+]
+counterexamples = [
+  "Select the word under the caret (via cursor)",
+  "See https://cursor.com/agents for details",
+]
+source = "https://cursor.com/help/integrations/git https://github.com/senthilkumar979/victory/pull/75 https://github.com/flightctl/flightctl/commit/654beb9d7daabbc6441fcd87c0166afdb81e435e"
+
+[[tool]]
+id = "deepseek"
+names = ["DeepSeek"]
+session-urls = ["chat.deepseek.com/share/"]
+examples = ["Generated with DeepSeek-V3", "See https://chat.deepseek.com/share/k3j2h1g4f5d6s7a8"]
+
+[[tool]]
+id = "devin"
+names = ["Devin AI"]
+github-logins = ["devin-ai-integration[bot]"]
+branch-prefixes = ["devin"]
+session-urls = ["app.devin.ai/sessions/", "app.devin.ai/desktop/session/"]
+examples = [
+  "Co-Authored-By: Devin AI <158243242+devin-ai-integration[bot]@users.noreply.github.com>",
+  "Link to Devin session: https://app.devin.ai/sessions/0123456789abcdef0123456789abcdef",
+]
+counterexamples = ["Reviewed-by: Devin Smith <devin@example.com>", "Written by Devin"]
+source = "https://github.com/hackutd/harp/pull/164 https://github.com/BerriAI/litellm/pull/40632"
+
+[[tool]]
+id = "factory"
+names = ["Factory Droid", "Factory AI", "Factory.ai"]
+emails = ["droid@factory.ai", "factory-droid@factory.ai"]
+github-logins = ["factory-droid[bot]", "factory-droid"]
+session-urls = ["app.factory.ai/sessions/"]
+examples = [
+  "Co-authored-by: factory-droid[bot] <138933559+factory-droid[bot]@users.noreply.github.com>",
+  "Co-authored-by: Droid <droid@factory.ai>",
+  "**Factory Session:** https://app.factory.ai/sessions/QWXYBxtiMFRCaykX9wRC",
+]
+source = "https://docs.factory.ai/enterprise/hierarchical-settings-and-org-control https://github.com/Factory-AI/tui-test/pull/37 https://github.com/chrisdoc/hevy-mcp/commit/e60f5b5435776429ec630610321122ef0786e493"
+
+[[tool]]
+id = "gemini"
+names = ["Gemini", "Gemini CLI", "Gemini Code Assist", "Google Gemini", "Google Bard", "Antigravity"]
+github-logins = ["gemini-code-assist[bot]", "gemini-code-assist", "gemini-cli"]
+session-urls = [
+  "gemini.google.com/share/",
+  "gemini.google.com/app/",
+  "g.co/gemini/share/",
+  "aistudio.google.com/app/prompts/",
+  "aistudio.google.com/prompts/",
+  "aistudio.google.com/apps/",
+]
+examples = [
+  "Co-authored-by: gemini-code-assist[bot] <176961590+gemini-code-assist[bot]@users.noreply.github.com>",
+  "Co-Authored-By: Antigravity (Gemini 3.8 Flash) <gemini-code-assist@users.noreply.github.com>",
+  "Co-authored-by: Gemini <218195315+gemini-cli@users.noreply.github.com>",
+  "Generated with Gemini 2.5 Pro",
+]
+counterexamples = ["Open https://aistudio.google.com/prompts/new_chat to get an API key"]
+source = "https://github.com/googleapis/mcp-toolbox/commit/9cf3e95 https://github.com/BlueKurage119/wx-viewer-poc/commit/de53ef1"
+
+[[tool]]
+id = "github-copilot"
+names = ["GitHub Copilot", "Copilot", "Copilot Chat"]
+emails = ["copilot@github.com"]
+github-logins = ["Copilot", "copilot-swe-agent[bot]", "copilot-pull-request-reviewer[bot]"]
+branch-prefixes = ["copilot"]
+session-urls = ["copilot.microsoft.com/shares/"]
+markers = [
+  "<!-- START COPILOT CODING AGENT SUFFIX -->",
+  "<!-- START COPILOT CODING AGENT TIPS -->",
+  "<!-- START COPILOT ORIGINAL PROMPT -->",
+  "This pull request was created from Copilot chat",
+  "gh.io/copilot-coding-agent-tips",
+]
+examples = [
+  "Co-authored-by: Copilot <198982749+Copilot@users.noreply.github.com>",
+  "Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>",
+  "Co-authored-by: Copilot <copilot@github.com>",
+  "*This pull request was created from Copilot chat.*",
+  "Suggested by GitHub Copilot",
+]
+source = "https://github.com/Azure/azure-container-networking/pull/4772 https://github.com/github/copilot-sdk/issues/1172 https://github.com/microsoft/vscode/issues/314311"
+
+[[tool]]
+id = "goose"
+names = ["Goose"]
+# An ordinary word, and its email is a shared Block address: only count it
+# as a commit author or trailer name.
+skip = ["phrases", "tags", "metadata"]
+examples = ["Co-authored-by: Goose <opensource@block.xyz>"]
+counterexamples = ["Fix the goose animation in the onboarding flow", "Written by a goose"]
+source = "https://github.com/block/ghost/commit/c55888ea181aeef7b4f5bd2af85129239986702f (seen in commits; not in goose source)"
+
+[[tool]]
+id = "grok"
+names = ["Grok"]
+session-urls = ["grok.com/share/", "x.com/i/grok/share/"]
+examples = ["Written by Grok 4", "See https://grok.com/share/bGVnYWN5_0c1d2e3f-4a5b-6c7d-8e9f-0a1b2c3d4e5f"]
+counterexamples = ["See https://x.com/i/grok"]
+
+[[tool]]
+id = "jetbrains"
+names = ["JetBrains AI", "JetBrains AI Assistant", "JetBrains Junie", "Junie (JetBrains)"]
+emails = ["junie@jetbrains.com"]
+examples = ["Co-authored-by: Junie <junie@jetbrains.com>", "Generated by JetBrains AI Assistant"]
+counterexamples = ["Written by Junie Moon"]
+source = "https://github.com/JetBrains/intellij-sdk-docs/commit/5cf6e17f57d10ce8a10cf0686d4cc2f2433cf2a4"
+
+[[tool]]
+id = "jules"
+names = ["Google Jules", "Jules (Google)"]
+github-logins = ["google-labs-jules[bot]"]
+branch-patterns = ['jules-\d+-[0-9a-f]{8}']
+session-urls = ["jules.google.com/task/"]
+examples = [
+  "Co-authored-by: google-labs-jules[bot] <161369871+google-labs-jules[bot]@users.noreply.github.com>",
+  "*PR created automatically by Jules for task [7232558608590402455](https://jules.google.com/task/7232558608590402455) started by @jane*",
+]
+counterexamples = ["Written by Jules Verne"]
+source = "https://github.com/Trentan/travel-planner/pull/380 https://github.com/d0linger/Parkrr/pull/162"
+
+[[tool]]
+id = "kimi"
+names = ["Kimi", "Kimi K2"]
+first-name = true
+session-urls = ["kimi.com/share/", "kimi.com/chat/"]
+examples = ["Generated with Kimi K2"]
+counterexamples = ["Written by Kimi Raikkonen"]
+
+[[tool]]
+id = "kiro"
+names = ["Kiro", "Kiro Agent", "Kiro IDE"]
+first-name = true
+emails = ["noreply@kiro.dev"]
+github-logins = ["kiro-agent", "kiro-agent[bot]"]
+examples = [
+  "Co-Authored-By: Kiro <noreply@kiro.dev>",
+  "Co-authored-by: Kiro Agent <244629292+kiro-agent@users.noreply.github.com>",
+]
+counterexamples = ["Co-authored-by: Kiro Tanaka <kiro@example.com>", "Deploy to the Kiro region cluster"]
+source = "https://github.com/Lucent-Financial-Group/Zeta/commit/1aa0f04cf5fdf6a44cc8d3cd38d07346d16a702d https://kiro.dev/docs/autonomous-agent/github/ https://github.com/Vraskaaa/Diablo-Like/pull/1"
+
+[[tool]]
+id = "llama"
+names = ["Llama", "Meta Llama", "Meta AI"]
+patterns = ['llama[\s-]?\d(?:\.\d+)?']
+examples = ["Written with Llama 3.1"]
+
+[[tool]]
+id = "mistral"
+names = ["Mistral", "Mixtral", "Codestral", "Devstral"]
+session-urls = ["chat.mistral.ai/chat/"]
+examples = ["Generated by Codestral"]
+counterexamples = ["See https://chat.mistral.ai/"]
+
+[[tool]]
+id = "ollama"
+names = ["Ollama"]
+examples = ["Co-authored-by: Ollama <helper@example.com>"]
+source = "unverified; listed by GoodHatsLLC/no-ai-coauthors"
+
+[[tool]]
+id = "openai"
+kind = "vendor"
+names = ["OpenAI"]
+examples = ["Author: OpenAI"]
+
+[[tool]]
+id = "opencode"
+names = ["opencode", "Open Code"]
+examples = ["Generated with opencode"]
+source = "names only: no self-attribution found in opencode source (packages/opencode/src/cli/cmd/github.handler.ts)"
+
+[[tool]]
+id = "openhands"
+names = ["OpenHands"]
+emails = ["openhands@all-hands.dev"]
+github-logins = ["openhands-agent", "openhands-ai[bot]"]
+branch-patterns = ['openhands-fix-issue-\d+']
+examples = [
+  "Co-authored-by: openhands <openhands@all-hands.dev>",
+  "Automatic fix generated by [OpenHands](https://github.com/All-Hands-AI/OpenHands/) \U0001F64C",
+]
+source = "https://github.com/OpenHands/OpenHands/pull/9666 OpenHands/src/services/settings.ts"
+
+[[tool]]
+id = "perplexity"
+names = ["Perplexity"]
+session-urls = ["perplexity.ai/search/"]
+examples = ["See https://www.perplexity.ai/search/0c1d2e3f-4a5b-6c7d-8e9f-0a1b2c3d4e5f"]
+
+[[tool]]
+id = "poe"
+session-urls = ["poe.com/s/"]
+examples = ["See https://poe.com/s/cqkxHCJyuXIINP0c9myo"]
+counterexamples = ["See https://poe.com/about"]
+source = "https://github.com/Xylop90/Elektronikx-Center-Matte-Cyborg/issues/3"
+
+[[tool]]
+id = "qwen"
+names = ["Qwen", "Qwen Code", "Qwen-Coder"]
+patterns = ['qwen[\d.]*(?:-?coder)?']
+emails = ["qwen-coder@alibabacloud.com"]
+examples = [
+  "Co-authored-by: Qwen-Coder <qwen-coder@alibabacloud.com>",
+  "Generated with Qwen Code",
+  "Generated with Qwen3-Coder",
+]
+source = "https://github.com/QwenLM/qwen-code/blob/af4dece3a73a545d45e5a81948ac1374f9068ea1/packages/core/src/config/config.ts#L2721-L2724"
+
+[[tool]]
+id = "replit"
+names = ["Replit Agent", "Replit AI"]
+examples = ["Co-authored-by: Replit Agent <helper@example.com>"]
+source = "unverified; listed by GoodHatsLLC/no-ai-coauthors"
+
+[[tool]]
+id = "sourcegraph"
+names = ["Sourcegraph Cody", "Cody AI"]
+examples = ["Generated by Sourcegraph Cody"]
+counterexamples = ["Written by Cody Jones"]
+
+[[tool]]
+id = "supermaven"
+names = ["Supermaven"]
+examples = ["Co-authored-by: Supermaven <helper@example.com>"]
+source = "unverified; listed by GoodHatsLLC/no-ai-coauthors"
+
+[[tool]]
+id = "sweep"
+names = ["Sweep AI"]
+github-logins = ["sweep-ai-bot[bot]"]
+branch-prefixes = ["sweep"]
+markers = ["To get Sweep to edit this pull request"]
+examples = ["Co-authored-by: sweep-ai-bot[bot] <187932079+sweep-ai-bot[bot]@users.noreply.github.com>"]
+source = "https://github.com/jiyanpatil07/cravoAI/pull/2 (no activity since 2024-11)"
+
+[[tool]]
+id = "tabnine"
+names = ["Tabnine"]
+examples = ["Generated with Tabnine"]
+source = "names only: no evidence of self-attribution found"
+
+[[tool]]
+id = "tembo"
+names = ["Tembo Agent"]
+github-logins = ["tembo[bot]"]
+branch-prefixes = ["tembo"]
+session-urls = ["app.tembo.io/sessions/"]
+examples = [
+  "Co-authored-by: tembo[bot] <208362400+tembo[bot]@users.noreply.github.com>",
+  "https://app.tembo.io/sessions/9e34d7b5-9970-4937-9b69-bd93de4c53b6",
+]
+counterexamples = ["Bump tembo-operator to 0.4"]
+source = "https://github.com/DarrenBaldwin07/darrenbaldwin.dev/pull/318"
+
+[[tool]]
+id = "warp"
+names = ["Warp Agent", "Warp AI"]
+emails = ["agent@warp.dev", "oz-agent@warp.dev"]
+examples = [
+  "Co-Authored-By: Warp <agent@warp.dev>",
+  "Co-Authored-By: Oz <oz-agent@warp.dev>",
+]
+source = "https://github.com/warpdotdev/docs/commit/9ff6935aac36fcf38bab5256d7f081b2c7138e29 https://github.com/warpdotdev/warp/issues/10956"
+
+[[tool]]
+id = "windsurf"
+names = ["Windsurf", "Windsurf Cascade", "Codeium"]
+examples = ["Generated with Windsurf"]
+source = "names only: no evidence of self-attribution found"
+
+[[tool]]
+id = "xai"
+kind = "vendor"
+names = ["xAI"]
+examples = ["Co-authored-by: xAI Grok 4 <helper@example.com>"]
+
+[[tool]]
+id = "zed"
+emails = ["zed@zed.dev"]
+examples = ["Co-authored-by: Zed <zed@zed.dev>"]
+source = "https://github.com/hatim-s/brain-bloom/commit/3681def3898e74f83cc081d6567089b60ea5e044 (seen in commits; not in Zed's source)"
+
+# Image generators. Their names also show up in EXIF, XMP, and PNG text.
+
+[[tool]]
+id = "adobe-firefly"
+names = ["Adobe Firefly"]
+examples = ["Image generated with Adobe Firefly"]
+
+[[tool]]
+id = "bing-image-creator"
+names = ["Bing Image Creator"]
+examples = ["Image created with Bing Image Creator"]
+
+[[tool]]
+id = "dall-e"
+names = ["DALL-E", "DALL\U000000B7E"]
+examples = ["Image generated with DALL-E 3"]
+
+[[tool]]
+id = "flux"
+names = ["FLUX.1"]
+examples = ["Image generated with FLUX.1"]
+
+[[tool]]
+id = "ideogram"
+names = ["Ideogram"]
+examples = ["Image generated with Ideogram"]
+
+[[tool]]
+id = "imagen"
+names = ["Imagen"]
+examples = ["Image generated with Imagen"]
+
+[[tool]]
+id = "invokeai"
+names = ["InvokeAI"]
+metadata-keys = ["invokeai_metadata"]
+examples = ["Image generated with InvokeAI"]
+
+[[tool]]
+id = "leonardo"
+names = ["Leonardo.ai"]
+examples = ["Image generated with Leonardo.ai"]
+
+[[tool]]
+id = "midjourney"
+names = ["Midjourney"]
+examples = ["Image generated with Midjourney"]
+
+[[tool]]
+id = "novelai"
+names = ["NovelAI"]
+examples = ["Image generated with NovelAI"]
+
+[[tool]]
+id = "runway"
+names = ["RunwayML", "Runway Gen-3"]
+examples = ["Video generated with Runway Gen-3"]
+
+[[tool]]
+id = "sora"
+names = ["OpenAI Sora"]
+examples = ["Video generated with OpenAI Sora"]
+
+[[tool]]
+id = "stable-diffusion"
+names = ["Stable Diffusion", "SDXL", "ComfyUI", "AUTOMATIC1111", "Fooocus"]
+metadata-keys = ["parameters", "prompt", "workflow", "sd-metadata", "generation_data", "dream"]
+examples = ["Image generated with Stable Diffusion XL"]
+
+# Words rather than products. Matched only in attribution phrases, and
+# written so that policy text ("code generated by AI tools is not
+# accepted") doesn't match.
+
+[[tool]]
+id = "generic"
+kind = "generic"
+patterns = [
+  '(?:an?\s+)?(?:ai|llm|language\s+model)(?:\s+(?:model|assistant|agent|tool|system))?',
+  'llms',
+  'genai',
+  '(?:a\s+)?large\s+language\s+model',
+  'artificial\s+intelligence',
+]
+examples = [
+  "Written with the help of an AI assistant",
+  "# Code generated by AI. DO NOT EDIT.",
+]
+counterexamples = [
+  "Code generated by AI tools is not accepted.",
+  "Do not submit code generated by AI.",
+  "Add AI-generated alt text feature",
+]

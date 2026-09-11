@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "no-ai-marks"
+version = "0.1.0"
+description = "Find AI attribution and hidden watermarks in commits, pull requests, branches, and files."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
+requires-python = ">=3.11"
+
+[project.scripts]
+no-ai-marks = "no_ai_marks.__main__:main"
+
+[tool.setuptools]
+packages = ["no_ai_marks"]
+
+[tool.setuptools.package-data]
+no_ai_marks = ["data/*.toml"]

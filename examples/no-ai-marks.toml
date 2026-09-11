@@ -1,0 +1,41 @@
+# Copy to .github/no-ai-marks.toml. Every setting is optional.
+# In pull requests, this file is read from the base branch.
+
+# "error" fails only on errors; "warning" fails on warnings too.
+fail-on = "error"
+
+# Paths to skip. "*" matches across directories; a plain directory name
+# skips everything under it.
+exclude = ["vendor/", "testdata/", "*.min.js"]
+
+# Built-in tools to ignore, by id. `no-ai-marks tools` lists them.
+disable-tools = ["cursor"]
+
+# Per-rule severity: "error", "warning", or "off". Run `no-ai-marks rules`
+# for the list and defaults.
+[rules]
+unusual-space = "off"
+c2pa-manifest = "off"
+
+# A tool the built-in list doesn't know yet. The fields are the same as in
+# no_ai_marks/data/tools.toml, where each one is described.
+[[tool]]
+id = "acme-agent"
+names = ["Acme Agent"]
+emails = ["agent@acme.example"]
+branch-prefixes = ["acme"]
+
+# Extending a built-in tool, e.g. with a model family released after the
+# version of no-ai-marks you use: lists are appended, other values replaced.
+[[tool]]
+id = "claude"
+models = ["Mythos"]
+
+# Regular expressions searched line by line.
+[patterns]
+extra = ['\bprompted\s+by\b']       # commit messages and pull request text
+extra-file = ['@generated-by-ai']   # added lines in files
+
+# Characters to allow everywhere, e.g. no-break spaces in French docs.
+[unicode]
+allow = ["U+00A0", "U+202F"]

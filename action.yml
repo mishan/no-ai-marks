@@ -1,0 +1,87 @@
+name: No AI Marks
+description: Fail CI when commits, pull requests, branch names, or files carry AI attribution or hidden watermarks.
+branding:
+  icon: shield
+  color: gray-dark
+
+inputs:
+  config:
+    description: Config file path. Default is .github/no-ai-marks.toml or .no-ai-marks.toml if either exists.
+    default: ""
+  checks:
+    description: "Comma-separated list of what to check: commits, pr, branch, files."
+    default: commits,pr,branch,files
+  scope:
+    description: "Files to scan. changed: only lines added in the commit range. all: every tracked file."
+    default: changed
+  fail-on:
+    description: "Lowest severity that fails the step: error or warning. Overrides the config file."
+    default: ""
+  base:
+    description: Override the base commit worked out from the event.
+    default: ""
+  head:
+    description: Override the head commit worked out from the event.
+    default: ""
+  python:
+    description: Python 3.11+ interpreter. Default is python3 or python on PATH if new enough, otherwise one installed by actions/setup-python.
+    default: ""
+
+outputs:
+  errors:
+    description: Number of error findings.
+    value: ${{ steps.scan.outputs.errors }}
+  warnings:
+    description: Number of warning findings.
+    value: ${{ steps.scan.outputs.warnings }}
+  report:
+    description: Path to a JSON file listing every finding.
+    value: ${{ steps.scan.outputs.report }}
+
+runs:
+  using: composite
+  steps:
+    - id: python
+      shell: bash
+      env:
+        NO_AI_MARKS_PYTHON: ${{ inputs.python }}
+      run: |
+        py="$NO_AI_MARKS_PYTHON"
+        if [ -z "$py" ]; then
+          if [ "${RUNNER_OS:-}" = "Windows" ]; then candidates="python python3"; else candidates="python3 python"; fi
+          for c in $candidates; do
+            if command -v "$c" >/dev/null 2>&1 && "$c" -c 'import sys; sys.exit(sys.version_info < (3, 11))' 2>/dev/null; then
+              py="$c"
+              break
+            fi
+          done
+        fi
+        echo "path=$py" >> "$GITHUB_OUTPUT"
+
+    # The runner's Python is missing or too old. Install one without
+    # changing PATH for the rest of the job.
+    - id: setup-python
+      if: steps.python.outputs.path == ''
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.x"
+        update-environment: false
+
+    - id: scan
+      shell: bash
+      env:
+        NO_AI_MARKS_PY: ${{ steps.python.outputs.path || steps.setup-python.outputs.python-path }}
+        NO_AI_MARKS_CONFIG: ${{ inputs.config }}
+        NO_AI_MARKS_CHECKS: ${{ inputs.checks }}
+        NO_AI_MARKS_SCOPE: ${{ inputs.scope }}
+        NO_AI_MARKS_FAIL_ON: ${{ inputs.fail-on }}
+        NO_AI_MARKS_BASE: ${{ inputs.base }}
+        NO_AI_MARKS_HEAD: ${{ inputs.head }}
+      run: |
+        set -euo pipefail
+        args=(ci --format github --checks "$NO_AI_MARKS_CHECKS" --scope "$NO_AI_MARKS_SCOPE" --report "$RUNNER_TEMP/no-ai-marks.json")
+        if [ -n "$NO_AI_MARKS_CONFIG" ]; then args+=(--config "$NO_AI_MARKS_CONFIG"); fi
+        if [ -n "$NO_AI_MARKS_FAIL_ON" ]; then args+=(--fail-on "$NO_AI_MARKS_FAIL_ON"); fi
+        if [ -n "$NO_AI_MARKS_BASE" ]; then args+=(--base "$NO_AI_MARKS_BASE"); fi
+        if [ -n "$NO_AI_MARKS_HEAD" ]; then args+=(--head "$NO_AI_MARKS_HEAD"); fi
+        "$NO_AI_MARKS_PY" "$GITHUB_ACTION_PATH/bin/no-ai-marks" "${args[@]}"

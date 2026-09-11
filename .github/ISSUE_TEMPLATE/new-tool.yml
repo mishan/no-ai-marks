@@ -1,0 +1,29 @@
+name: New AI tool or marker
+description: An AI tool, bot account, trailer, branch prefix, or link that no-ai-marks misses.
+labels: [tools]
+body:
+  - type: input
+    id: tool
+    attributes:
+      label: Tool
+      placeholder: Acme Agent
+    validations:
+      required: true
+  - type: textarea
+    id: marker
+    attributes:
+      label: What it adds
+      description: The trailer, author line, footer, branch name, or link, exactly as the tool writes it.
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Source
+      description: A link to the tool's docs or a public commit that shows it.
+  - type: textarea
+    id: counterexamples
+    attributes:
+      label: Anything that must not match
+      description: For example, a person or product with the same name.

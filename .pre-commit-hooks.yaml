@@ -1,0 +1,15 @@
+- id: no-ai-marks-commit-msg
+  name: no-ai-marks (commit message)
+  description: Reject AI attribution and hidden characters in commit messages.
+  entry: no-ai-marks message
+  language: python
+  stages: [commit-msg]
+
+- id: no-ai-marks-staged
+  name: no-ai-marks (staged lines)
+  description: Reject AI attribution and hidden characters in staged changes.
+  entry: no-ai-marks staged
+  language: python
+  pass_filenames: false
+  always_run: true
+  stages: [pre-commit]

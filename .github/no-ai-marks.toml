@@ -1,0 +1,9 @@
+# The README, the tests, and the pattern definitions and tool list (with its
+# examples) quote the markers this action looks for.
+exclude = [
+  "README.md",
+  "tests/",
+  "no_ai_marks/patterns.py",
+  "no_ai_marks/metadata.py",
+  "no_ai_marks/data/tools.toml",
+]

@@ -1,0 +1,43 @@
+# Reusable workflow. Callers add a whole job with:
+#
+#   jobs:
+#     no-ai-marks:
+#       uses: OWNER/no-ai-marks/.github/workflows/no-ai-marks.yml@v0
+name: no-ai-marks
+
+on:
+  workflow_call:
+    inputs:
+      config:
+        type: string
+        default: ""
+      checks:
+        type: string
+        default: commits,pr,branch,files
+      scope:
+        type: string
+        default: changed
+      fail-on:
+        type: string
+        default: ""
+      runs-on:
+        type: string
+        default: ubuntu-latest
+
+permissions:
+  contents: read
+
+jobs:
+  no-ai-marks:
+    runs-on: ${{ inputs.runs-on }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: OWNER/no-ai-marks@v0
+        with:
+          config: ${{ inputs.config }}
+          checks: ${{ inputs.checks }}
+          scope: ${{ inputs.scope }}
+          fail-on: ${{ inputs.fail-on }}
