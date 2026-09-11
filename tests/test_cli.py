@@ -163,5 +163,33 @@ class CiTest(RepoTestCase):
         self.assertIn("fetch-depth: 0", err)
 
 
+class EncodingTest(RepoTestCase):
+    """Windows pipes default to the ANSI code page. PYTHONIOENCODING=cp1252
+    reproduces that on any platform."""
+
+    CP1252 = {"PYTHONIOENCODING": "cp1252"}
+
+    def test_output_is_utf8(self):
+        code, out, _ = self.repo.run("tools", env=self.CP1252)
+        self.assertEqual(code, 0)
+        self.assertIn("DALL\N{MIDDLE DOT}E", out)
+
+    def test_findings_that_name_lookalike_letters_print(self):
+        path = os.path.join(self.repo.path, "MSG")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write("Log in to p\N{CYRILLIC SMALL LETTER A}ypal\n")
+        code, out, err = self.repo.run("text", path, "--format", "text", env=self.CP1252)
+        self.assertNotIn("Traceback", err)
+        self.assertEqual(code, 1)
+        self.assertIn("CYRILLIC SMALL LETTER A", out)
+
+    def test_stdin_is_read_as_utf8(self):
+        body = "Fix\N{ZERO WIDTH SPACE} it\n".encode("utf-8")
+        code, out, err = self.repo.run("text", "--format", "text", env=self.CP1252, input=body)
+        self.assertNotIn("Traceback", err)
+        self.assertEqual(code, 1)
+        self.assertIn("U+200B ZERO WIDTH SPACE", out)
+
+
 if __name__ == "__main__":
     unittest.main()

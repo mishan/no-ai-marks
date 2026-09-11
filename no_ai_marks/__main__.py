@@ -17,6 +17,7 @@ CHECKS = ("commits", "pr", "branch", "files")
 
 
 def main(argv: list[str] | None = None) -> int:
+    _use_utf8()
     args = _parser().parse_args(argv)
     args.format = args.format or ("github" if os.environ.get("GITHUB_ACTIONS") == "true" else "text")
     try:
@@ -27,6 +28,15 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print(f"no-ai-marks: {e}", file=sys.stderr)
         return 2
+
+
+def _use_utf8() -> None:
+    """Read and write UTF-8 on every platform. On Windows, pipes otherwise
+    use the ANSI code page: a finding that names a look-alike letter can't
+    be printed, and a pull request body piped to `text` is misread."""
+    for stream in (sys.stdin, sys.stdout, sys.stderr):
+        if stream is not None and hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
 
 
 def _parser() -> argparse.ArgumentParser:

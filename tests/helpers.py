@@ -69,9 +69,9 @@ class Repo:
         self.git(*args)
         return self.git("rev-parse", "HEAD")
 
-    def run(self, *args, env=None):
+    def run(self, *args, env=None, input=None):
         proc = subprocess.run(
             [sys.executable, BIN, *args], cwd=self.path, env={**ENV, **(env or {})},
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            input=input, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         )
         return proc.returncode, proc.stdout.decode("utf-8"), proc.stderr.decode("utf-8")
