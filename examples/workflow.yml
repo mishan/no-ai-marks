@@ -20,4 +20,4 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: OWNER/no-ai-marks@v0
+      - uses: mishan/no-ai-marks@v0

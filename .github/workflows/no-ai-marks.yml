@@ -2,7 +2,7 @@
 #
 #   jobs:
 #     no-ai-marks:
-#       uses: OWNER/no-ai-marks/.github/workflows/no-ai-marks.yml@v0
+#       uses: mishan/no-ai-marks/.github/workflows/no-ai-marks.yml@v0
 name: no-ai-marks
 
 on:
@@ -35,7 +35,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: OWNER/no-ai-marks@v0
+      - uses: mishan/no-ai-marks@v0
         with:
           config: ${{ inputs.config }}
           checks: ${{ inputs.checks }}

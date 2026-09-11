@@ -87,7 +87,7 @@ jobs:
         with:
           fetch-depth: 0          # the commit range needs history
           persist-credentials: false
-      - uses: OWNER/no-ai-marks@v0
+      - uses: mishan/no-ai-marks@v0
 ```
 
 Inputs, all optional: `config`, `checks` (`commits,pr,branch,files`), `scope`
@@ -105,7 +105,7 @@ on:
 
 jobs:
   no-ai-marks:
-    uses: OWNER/no-ai-marks/.github/workflows/no-ai-marks.yml@v0
+    uses: mishan/no-ai-marks/.github/workflows/no-ai-marks.yml@v0
     with:
       scope: changed
 ```
@@ -116,8 +116,8 @@ With [pre-commit](https://pre-commit.com):
 
 ```yaml
 repos:
-  - repo: https://github.com/OWNER/no-ai-marks
-    rev: v0.1.0
+  - repo: https://github.com/mishan/no-ai-marks
+    rev: v0.1.1
     hooks:
       - id: no-ai-marks-commit-msg
       - id: no-ai-marks-staged
