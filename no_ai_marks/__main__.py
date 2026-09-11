@@ -31,12 +31,15 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _use_utf8() -> None:
-    """Read and write UTF-8 on every platform. On Windows, pipes otherwise
-    use the ANSI code page: a finding that names a look-alike letter can't
-    be printed, and a pull request body piped to `text` is misread."""
-    for stream in (sys.stdin, sys.stdout, sys.stderr):
+    """Read and write UTF-8, and write LF line endings, on every platform.
+    On Windows, pipes otherwise use the ANSI code page: a finding that names
+    a look-alike letter can't be printed, and a pull request body piped to
+    `text` is misread. Output would also end lines with CRLF."""
+    for stream in (sys.stdout, sys.stderr):
         if stream is not None and hasattr(stream, "reconfigure"):
-            stream.reconfigure(encoding="utf-8", errors="replace")
+            stream.reconfigure(encoding="utf-8", errors="replace", newline="\n")
+    if sys.stdin is not None and hasattr(sys.stdin, "reconfigure"):
+        sys.stdin.reconfigure(encoding="utf-8", errors="replace")
 
 
 def _parser() -> argparse.ArgumentParser:

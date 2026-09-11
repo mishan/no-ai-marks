@@ -1,9 +1,13 @@
+import io
 import json
 import os
+import sys
 import tempfile
 import unittest
 
 from helpers import Repo
+
+from no_ai_marks.__main__ import _use_utf8
 
 TRAILER = "Co-Authored-By: Claude <noreply@anthropic.com>"
 
@@ -161,6 +165,23 @@ class CiTest(RepoTestCase):
         code, _, err = self.repo.run("ci", "--format", "text", env=env)
         self.assertEqual(code, 2)
         self.assertIn("fetch-depth: 0", err)
+
+
+class StreamsTest(unittest.TestCase):
+    def test_windows_pipe_gets_utf8_and_lf(self):
+        # How Windows sets up a piped stdout: ANSI code page, CRLF endings.
+        saved = sys.stdin, sys.stdout, sys.stderr
+        out = io.BytesIO()
+        try:
+            sys.stdin = io.TextIOWrapper(io.BytesIO(b""), encoding="cp1252")
+            sys.stdout = io.TextIOWrapper(out, encoding="cp1252", newline="\r\n")
+            sys.stderr = io.TextIOWrapper(io.BytesIO(), encoding="cp1252", newline="\r\n")
+            _use_utf8()
+            print("DALL\N{MIDDLE DOT}E")
+            sys.stdout.flush()
+            self.assertEqual(out.getvalue(), "DALL\N{MIDDLE DOT}E\n".encode("utf-8"))
+        finally:
+            sys.stdin, sys.stdout, sys.stderr = saved
 
 
 class EncodingTest(RepoTestCase):
