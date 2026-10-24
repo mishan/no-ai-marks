@@ -1,4 +1,4 @@
 """Fail CI when commits, pull requests, branches, or files carry AI
 attribution or hidden watermarks."""
 
-__version__ = "0.2.2"
+__version__ = "0.2.3"

@@ -136,7 +136,7 @@ With [pre-commit](https://pre-commit.com):
 ```yaml
 repos:
   - repo: https://github.com/mishan/no-ai-marks
-    rev: v0.2.2
+    rev: v0.2.3
     hooks:
       - id: no-ai-marks-commit-msg
       - id: no-ai-marks-staged
