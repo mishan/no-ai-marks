@@ -96,8 +96,8 @@ python3 -m unittest discover -s tests
 ## Releasing
 
 1. Set the version in `pyproject.toml`, `__version__` in
-   `no_ai_marks/__init__.py`, and the README's pre-commit `rev`. Merge
-   that to main.
+   `no_ai_marks/__init__.py`, and the README's pre-commit `rev`, and add
+   the release to `CHANGELOG.md`. Merge that to main.
 2. Tag it and push the tag. `release.yml` runs the tests, checks the tag
    is the version, and publishes to PyPI.
 
@@ -105,7 +105,8 @@ python3 -m unittest discover -s tests
    git tag vX.Y.Z && git push origin vX.Y.Z
    ```
 
-3. Add the release on GitHub, and move `v0` to it, for the Action's users:
+3. Add the release on GitHub, with its `CHANGELOG.md` entry as the notes,
+   and move `v0` to it, for the Action's users:
 
    ```sh
    gh release create vX.Y.Z --verify-tag --title vX.Y.Z --notes-file NOTES.md
