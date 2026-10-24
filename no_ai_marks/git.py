@@ -180,6 +180,8 @@ class Blobs:
 
     def read(self, spec: str) -> bytes | None:
         """Read "<rev>:<path>" (or ":<path>" for the index)."""
+        if "\n" in spec:
+            return show(*spec.split(":", 1))
         self._proc.stdin.write(spec.encode("utf-8", "surrogateescape") + b"\n")
         self._proc.stdin.flush()
         header = self._proc.stdout.readline().split()
